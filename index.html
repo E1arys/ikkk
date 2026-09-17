@@ -1,0 +1,2570 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Geometry Dash Mini</title>
+
+<style>
+
+/* =========================
+   ОСНОВА
+========================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    overflow: hidden;
+    background: #050712;
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
+    user-select: none;
+}
+
+
+/* =========================
+   ИГРА
+========================= */
+
+#game {
+    position: relative;
+
+    width: 100vw;
+    height: 100vh;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            rgba(30, 35, 80, .35) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(30, 35, 80, .35) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            135deg,
+            #080c28,
+            #171044 50%,
+            #061a38
+        );
+
+    background-size:
+        45px 45px,
+        45px 45px,
+        cover;
+}
+
+
+/* затемнение по краям */
+
+#game::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            circle at center,
+            transparent 25%,
+            rgba(0,0,0,.5)
+        );
+
+    z-index: 70;
+}
+
+
+/* =========================
+   МИР
+========================= */
+
+#world {
+    position: absolute;
+
+    left: 0;
+    top: 0;
+
+    width: 10000px;
+    height: 100%;
+
+    will-change: transform;
+}
+
+
+/* =========================
+   ИГРОК
+========================= */
+
+.player {
+    position: absolute;
+
+    width: 42px;
+    height: 42px;
+
+    left: 150px;
+
+    /*
+       90px = высота земли.
+       Кубик стоит прямо на земле.
+    */
+    bottom: 90px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #38f9ff,
+            #1d63ff
+        );
+
+    border: 3px solid white;
+
+    box-shadow:
+        0 0 10px #24dfff,
+        0 0 25px #24dfff;
+
+    transform-origin: center;
+
+    z-index: 20;
+
+    will-change:
+        transform,
+        bottom;
+}
+
+
+/* глаза / узор */
+
+.player::before {
+    content: "";
+
+    position: absolute;
+
+    width: 8px;
+    height: 8px;
+
+    left: 7px;
+    top: 7px;
+
+    background: white;
+
+    box-shadow:
+        18px 0 white,
+        9px 17px rgba(255,255,255,.8);
+}
+
+
+/* =========================
+   ЗЕМЛЯ
+========================= */
+
+.ground {
+    position: fixed;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    height: 90px;
+
+    background:
+        linear-gradient(
+            #20e8ff,
+            #1051c9
+        );
+
+    border-top:
+        5px solid white;
+
+    box-shadow:
+        0 -5px 25px #12cfff;
+
+    z-index: 15;
+}
+
+
+/* =========================
+   ШИП
+========================= */
+
+.spike {
+    position: absolute;
+
+    width: 0;
+    height: 0;
+
+    border-left:
+        23px solid transparent;
+
+    border-right:
+        23px solid transparent;
+
+    border-bottom:
+        48px solid #ff315d;
+
+    filter:
+        drop-shadow(
+            0 0 8px #ff174f
+        );
+
+    z-index: 16;
+}
+
+
+/* свечение шипа */
+
+.spike::after {
+    content: "";
+
+    position: absolute;
+
+    left: -3px;
+    top: 36px;
+
+    width: 6px;
+    height: 6px;
+
+    background: white;
+}
+
+
+/* =========================
+   БЛОК
+========================= */
+
+.block {
+    position: absolute;
+
+    background:
+        linear-gradient(
+            135deg,
+            #8a39ff,
+            #4b17b8
+        );
+
+    border:
+        3px solid white;
+
+    box-shadow:
+        0 0 15px #7d35ff;
+
+    z-index: 14;
+}
+
+
+/* =========================
+   МОНЕТА
+========================= */
+
+.coin {
+    position: absolute;
+
+    width: 28px;
+    height: 28px;
+
+    border:
+        4px solid #ffe94a;
+
+    border-radius: 50%;
+
+    box-shadow:
+        0 0 18px #ffd900;
+
+    z-index: 18;
+
+    animation:
+        coinSpin .7s linear infinite;
+}
+
+
+@keyframes coinSpin {
+
+    50% {
+        transform: scaleX(.15);
+    }
+
+}
+
+
+/* =========================
+   UI
+========================= */
+
+#ui {
+    position: absolute;
+
+    top: 22px;
+    left: 25px;
+    right: 25px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    z-index: 90;
+
+    pointer-events: none;
+}
+
+
+.title {
+    font-size: 25px;
+
+    font-weight: 900;
+
+    letter-spacing: 3px;
+
+    text-shadow:
+        0 0 15px #29eaff;
+}
+
+
+#score {
+    font-size: 22px;
+
+    font-weight: bold;
+}
+
+
+/* =========================
+   ПРОГРЕСС
+========================= */
+
+#progress {
+    position: absolute;
+
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+
+    top: 68px;
+
+    width:
+        min(600px, 70vw);
+
+    height: 8px;
+
+    border-radius: 20px;
+
+    background:
+        rgba(255,255,255,.15);
+
+    overflow: hidden;
+
+    z-index: 90;
+}
+
+
+#progressBar {
+    width: 0%;
+
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            #24f7ff,
+            #9a4dff,
+            #ff3e83
+        );
+
+    box-shadow:
+        0 0 12px #37eaff;
+
+    transition:
+        width .05s linear;
+}
+
+
+/* =========================
+   ЭКРАНЫ
+========================= */
+
+#menu,
+#gameOver,
+#levelMenu {
+
+    position: absolute;
+
+    inset: 0;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    z-index: 100;
+
+    background:
+        rgba(5,7,20,.84);
+
+    backdrop-filter:
+        blur(8px);
+}
+
+
+.panel {
+
+    width:
+        min(520px, 90vw);
+
+    padding: 45px;
+
+    border:
+        2px solid
+        rgba(255,255,255,.25);
+
+    border-radius: 25px;
+
+    text-align: center;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(30,35,90,.97),
+            rgba(15,10,50,.97)
+        );
+
+    box-shadow:
+        0 0 60px
+        rgba(49,190,255,.2);
+}
+
+
+h1 {
+
+    font-size: 52px;
+
+    margin-bottom: 10px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #29f8ff,
+            #b24dff,
+            #ff4282
+        );
+
+    -webkit-background-clip: text;
+
+    color: transparent;
+}
+
+
+h2 {
+
+    margin-bottom: 25px;
+
+}
+
+
+/* =========================
+   КНОПКИ
+========================= */
+
+button {
+
+    border: 0;
+
+    padding:
+        15px 35px;
+
+    margin: 8px;
+
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #21dfff,
+            #6a39ff
+        );
+
+    color: white;
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 0 20px
+        rgba(54,214,255,.35);
+
+    transition:
+        .2s;
+}
+
+
+button:hover {
+
+    transform:
+        translateY(-3px)
+        scale(1.03);
+
+    box-shadow:
+        0 0 30px
+        rgba(54,214,255,.7);
+}
+
+
+.levels {
+
+    display: flex;
+
+    flex-direction: column;
+}
+
+
+.levels button {
+
+    width: 100%;
+}
+
+
+.hidden {
+
+    display: none !important;
+}
+
+
+.hint {
+
+    opacity: .65;
+
+    margin-top: 20px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================
+   FLASH
+========================= */
+
+#flash {
+
+    position: absolute;
+
+    inset: 0;
+
+    background: white;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    z-index: 95;
+
+    transition:
+        opacity .05s;
+}
+
+
+/* =========================
+   ЧАСТИЦЫ
+========================= */
+
+.particle {
+
+    position: absolute;
+
+    width: 7px;
+    height: 7px;
+
+    background: white;
+
+    border-radius: 50%;
+
+    pointer-events: none;
+
+    z-index: 30;
+
+}
+
+
+/* =========================
+   МОБИЛЬНЫЙ ЭКРАН
+========================= */
+
+@media (max-width: 600px) {
+
+    .title {
+        font-size: 17px;
+    }
+
+    #score {
+        font-size: 17px;
+    }
+
+    h1 {
+        font-size: 40px;
+    }
+
+    .panel {
+        padding: 30px 20px;
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<div id="game">
+
+
+    <!-- МИР -->
+
+    <div id="world"></div>
+
+
+    <!-- ИГРОК -->
+
+    <div
+        class="player"
+        id="player">
+    </div>
+
+
+    <!-- ЗЕМЛЯ -->
+
+    <div class="ground"></div>
+
+
+    <!-- UI -->
+
+    <div id="ui">
+
+        <div class="title">
+            GEOMETRY MINI
+        </div>
+
+        <div id="score">
+            0%
+        </div>
+
+    </div>
+
+
+    <!-- ПРОГРЕСС -->
+
+    <div id="progress">
+
+        <div id="progressBar"></div>
+
+    </div>
+
+
+    <!-- ВСПЫШКА -->
+
+    <div id="flash"></div>
+
+
+    <!-- =========================
+         ГЛАВНОЕ МЕНЮ
+    ========================== -->
+
+    <div id="menu">
+
+        <div class="panel">
+
+            <h1>
+                GEOMETRY
+            </h1>
+
+            <h2>
+                MINI DASH
+            </h2>
+
+            <button
+                onclick="showLevels()">
+
+                ИГРАТЬ
+
+            </button>
+
+
+            <div class="hint">
+
+                SPACE / ↑ / ЛКМ — прыжок<br>
+
+                Избегай шипов и доберись
+                до конца уровня!
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         ВЫБОР УРОВНЯ
+    ========================== -->
+
+    <div
+        id="levelMenu"
+        class="hidden">
+
+        <div class="panel">
+
+            <h2>
+                ВЫБЕРИ УРОВЕНЬ
+            </h2>
+
+
+            <div class="levels">
+
+                <button
+                    onclick="startGame(0)">
+
+                    1 — NEON START
+
+                </button>
+
+
+                <button
+                    onclick="startGame(1)">
+
+                    2 — ELECTRIC CITY
+
+                </button>
+
+
+                <button
+                    onclick="startGame(2)">
+
+                    3 — FINAL CHAOS
+
+                </button>
+
+            </div>
+
+
+            <button
+                onclick="backMenu()">
+
+                НАЗАД
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         GAME OVER
+    ========================== -->
+
+    <div
+        id="gameOver"
+        class="hidden">
+
+        <div class="panel">
+
+            <h1 id="resultIcon">
+                💥
+            </h1>
+
+            <h2 id="resultTitle">
+                GAME OVER
+            </h2>
+
+            <p id="finalScore">
+                Прогресс: 0%
+            </p>
+
+
+            <button
+                onclick="restart()">
+
+                ЗАНОВО
+
+            </button>
+
+
+            <button
+                onclick="showLevels()">
+
+                УРОВНИ
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   ПОЛУЧАЕМ ЭЛЕМЕНТЫ
+===================================================== */
+
+const world =
+    document.getElementById("world");
+
+const player =
+    document.getElementById("player");
+
+const gameOver =
+    document.getElementById("gameOver");
+
+const menu =
+    document.getElementById("menu");
+
+const levelMenu =
+    document.getElementById("levelMenu");
+
+const scoreText =
+    document.getElementById("score");
+
+const progressBar =
+    document.getElementById("progressBar");
+
+const flash =
+    document.getElementById("flash");
+
+
+/* =====================================================
+   СОСТОЯНИЕ ИГРЫ
+===================================================== */
+
+let running = false;
+
+let level = 0;
+
+let worldX = 0;
+
+let distance = 0;
+
+let levelLength = 5000;
+
+let speed = 7;
+
+
+/* =====================================================
+   ФИЗИКА
+===================================================== */
+
+let playerY = 0;
+
+let velocityY = 0;
+
+
+/*
+    Чем больше gravity,
+    тем быстрее кубик падает.
+*/
+
+const gravity = 0.82;
+
+
+/*
+    Сила прыжка.
+*/
+
+const jumpPower = 15.2;
+
+
+/*
+    Высота земли.
+*/
+
+const groundHeight = 90;
+
+
+/*
+    Размер кубика.
+*/
+
+const playerSize = 42;
+
+
+/* =====================================================
+   ВРАЩЕНИЕ
+===================================================== */
+
+let rotation = 0;
+
+let targetRotation = 0;
+
+
+/* =====================================================
+   ОБЪЕКТЫ
+===================================================== */
+
+let obstacles = [];
+
+let coins = [];
+
+
+/* =====================================================
+   ВРЕМЯ
+===================================================== */
+
+let lastTime = 0;
+
+
+/* =====================================================
+   АУДИО
+===================================================== */
+
+let audioCtx = null;
+
+let musicTimer = null;
+
+
+/* =====================================================
+   УРОВНИ
+===================================================== */
+
+const levels = [
+
+    /* ======================
+       LEVEL 1
+    ====================== */
+
+    {
+
+        speed: 7,
+
+        length: 5200,
+
+        obstacles: [
+
+            [650,0],
+
+            [900,0],
+            [940,0],
+
+            [1250,0],
+
+            [1550,0],
+            [1595,0],
+
+            [1950,0],
+
+            [2200,0],
+            [2245,0],
+
+            [2700,0],
+            [2745,0],
+
+            [3000,0],
+
+            [3450,0],
+
+            [3900,0],
+            [3945,0],
+
+            [4300,0],
+            [4345,0],
+
+            [4600,0]
+
+        ],
+
+        coins: [
+
+            1100,
+            1750,
+            2350,
+            3200,
+            4100,
+            4800
+
+        ]
+
+    },
+
+
+    /* ======================
+       LEVEL 2
+    ====================== */
+
+    {
+
+        speed: 8.5,
+
+        length: 6500,
+
+        obstacles: [
+
+            [600,0],
+
+            [900,0],
+            [945,0],
+
+            [1200,0],
+
+            [1500,0],
+            [1545,0],
+            [1590,0],
+
+            [1950,0],
+
+            [2200,0],
+            [2245,0],
+
+            [2600,0],
+            [2645,0],
+            [2690,0],
+
+            [3100,0],
+
+            [3500,0],
+            [3545,0],
+
+            [3900,0],
+            [3945,0],
+            [3990,0],
+
+            [4400,0],
+
+            [4750,0],
+            [4795,0],
+
+            [5200,0],
+            [5245,0],
+            [5290,0],
+
+            [5800,0],
+
+            [6200,0]
+
+        ],
+
+        coins: [
+
+            800,
+            1300,
+            1800,
+            2400,
+            2900,
+            3700,
+            4300,
+            5000,
+            5700
+
+        ]
+
+    },
+
+
+    /* ======================
+       LEVEL 3
+    ====================== */
+
+    {
+
+        speed: 10,
+
+        length: 7600,
+
+        obstacles: [
+
+            [550,0],
+
+            [900,0],
+            [945,0],
+            [990,0],
+
+            [1300,0],
+            [1345,0],
+
+            [1650,0],
+            [1695,0],
+            [1740,0],
+
+            [2100,0],
+
+            [2500,0],
+            [2545,0],
+            [2590,0],
+
+            [3000,0],
+            [3045,0],
+            [3090,0],
+
+            [3500,0],
+
+            [3900,0],
+            [3945,0],
+            [3990,0],
+
+            [4400,0],
+            [4445,0],
+
+            [4800,0],
+            [4845,0],
+            [4890,0],
+
+            [5300,0],
+
+            [5750,0],
+            [5795,0],
+
+            [6200,0],
+            [6245,0],
+            [6290,0],
+
+            [6700,0],
+            [6750,0],
+            [6800,0],
+
+            [7200,0]
+
+        ],
+
+        coins: [
+
+            700,
+            1100,
+            1450,
+            1900,
+            2300,
+            2800,
+            3300,
+            3700,
+            4200,
+            4600,
+            5100,
+            5500,
+            6000,
+            6500,
+            7000
+
+        ]
+
+    }
+
+];
+
+
+/* =====================================================
+   МЕНЮ
+===================================================== */
+
+function showLevels() {
+
+    running = false;
+
+    clearInterval(musicTimer);
+
+    menu.classList.add("hidden");
+
+    gameOver.classList.add("hidden");
+
+    levelMenu.classList.remove("hidden");
+
+}
+
+
+function backMenu() {
+
+    running = false;
+
+    clearInterval(musicTimer);
+
+    levelMenu.classList.add("hidden");
+
+    gameOver.classList.add("hidden");
+
+    menu.classList.remove("hidden");
+
+}
+
+
+/* =====================================================
+   START GAME
+===================================================== */
+
+function startGame(selectedLevel) {
+
+    level = selectedLevel;
+
+    const data =
+        levels[level];
+
+
+    speed =
+        data.speed;
+
+    levelLength =
+        data.length;
+
+
+    menu.classList.add("hidden");
+
+    levelMenu.classList.add("hidden");
+
+    gameOver.classList.add("hidden");
+
+
+    /*
+        Очищаем старый мир.
+    */
+
+    world.innerHTML = "";
+
+
+    obstacles = [];
+
+    coins = [];
+
+
+    /*
+        Сбрасываем позицию.
+    */
+
+    worldX = 0;
+
+    distance = 0;
+
+
+    /*
+        Сбрасываем физику.
+    */
+
+    playerY = 0;
+
+    velocityY = 0;
+
+
+    /*
+        Сбрасываем вращение.
+    */
+
+    rotation = 0;
+
+    targetRotation = 0;
+
+
+    /*
+        Ставим игрока
+        прямо на землю.
+    */
+
+    player.style.bottom =
+        groundHeight + "px";
+
+    player.style.transform =
+        "rotate(0deg)";
+
+
+    createLevel(data);
+
+
+    running = true;
+
+    lastTime =
+        performance.now();
+
+
+    startMusic();
+
+
+    requestAnimationFrame(loop);
+
+}
+
+
+/* =====================================================
+   RESTART
+===================================================== */
+
+function restart() {
+
+    startGame(level);
+
+}
+
+
+/* =====================================================
+   СОЗДАНИЕ УРОВНЯ
+===================================================== */
+
+function createLevel(data) {
+
+
+    /* ======================
+       ШИПЫ
+    ====================== */
+
+    data.obstacles.forEach(
+        ([x, y]) => {
+
+            const spike =
+                document.createElement(
+                    "div"
+                );
+
+
+            spike.className =
+                "spike";
+
+
+            spike.style.left =
+                x + "px";
+
+
+            spike.style.bottom =
+                (
+                    groundHeight +
+                    y
+                ) + "px";
+
+
+            world.appendChild(
+                spike
+            );
+
+
+            obstacles.push({
+
+                el: spike,
+
+                x: x,
+
+                y: y
+
+            });
+
+        }
+    );
+
+
+    /* ======================
+       МОНЕТЫ
+    ====================== */
+
+    data.coins.forEach(
+        x => {
+
+            const coin =
+                document.createElement(
+                    "div"
+                );
+
+
+            coin.className =
+                "coin";
+
+
+            coin.style.left =
+                x + "px";
+
+
+            coin.style.bottom =
+                "180px";
+
+
+            world.appendChild(
+                coin
+            );
+
+
+            coins.push({
+
+                el: coin,
+
+                x: x,
+
+                collected: false
+
+            });
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   ПРЫЖОК
+===================================================== */
+
+function jump() {
+
+    if (!running)
+        return;
+
+
+    /*
+        Если игрок в воздухе —
+        второй прыжок запрещён.
+    */
+
+    if (playerY > 1)
+        return;
+
+
+    /*
+        МГНОВЕННО задаём скорость.
+    */
+
+    velocityY =
+        jumpPower;
+
+
+    /*
+        Поворачиваем кубик
+        ровно на 90 градусов.
+    */
+
+    targetRotation += 90;
+
+
+    playJump();
+
+
+    /*
+        Частицы.
+    */
+
+    for (
+        let i = 0;
+        i < 8;
+        i++
+    ) {
+
+        createParticle();
+
+    }
+
+}
+
+
+/* =====================================================
+   КЛАВИАТУРА
+===================================================== */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.code === "Space" ||
+            event.code === "ArrowUp"
+        ) {
+
+            event.preventDefault();
+
+
+            /*
+                Не вызываем jump
+                много раз при удержании.
+            */
+
+            if (!event.repeat) {
+
+                jump();
+
+            }
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   МЫШЬ
+===================================================== */
+
+document.addEventListener(
+    "mousedown",
+    event => {
+
+        /*
+            Не реагируем,
+            если нажали кнопку меню.
+        */
+
+        if (
+            event.target.tagName ===
+            "BUTTON"
+        ) {
+
+            return;
+
+        }
+
+
+        jump();
+
+    }
+);
+
+
+/* =====================================================
+   GAME LOOP
+===================================================== */
+
+function loop(time) {
+
+    if (!running)
+        return;
+
+
+    /*
+        delta time.
+
+        Благодаря этому игра
+        работает стабильнее
+        при разном FPS.
+    */
+
+    let dt =
+        (
+            time -
+            lastTime
+        ) / 16.6667;
+
+
+    lastTime =
+        time;
+
+
+    /*
+        Ограничиваем слишком
+        большой скачок времени.
+    */
+
+    dt =
+        Math.min(
+            dt,
+            2
+        );
+
+
+    update(dt);
+
+
+    requestAnimationFrame(
+        loop
+    );
+
+}
+
+
+/* =====================================================
+   UPDATE
+===================================================== */
+
+function update(dt) {
+
+
+    /* ======================
+       ФИЗИКА
+    ====================== */
+
+    velocityY -=
+        gravity * dt;
+
+
+    playerY +=
+        velocityY * dt;
+
+
+    /* ======================
+       ЗЕМЛЯ
+    ====================== */
+
+    if (
+        playerY <= 0
+    ) {
+
+        playerY = 0;
+
+        velocityY = 0;
+
+
+        /*
+            Когда приземлились,
+            точно устанавливаем
+            ближайший угол.
+        */
+
+        rotation =
+            Math.round(
+                targetRotation / 90
+            ) * 90;
+
+    }
+
+
+    /* ======================
+       ВОЗДУХ
+    ====================== */
+
+    else {
+
+        /*
+            Плавное вращение
+            к следующему углу.
+        */
+
+        rotation +=
+            (
+                targetRotation -
+                rotation
+            ) *
+            0.18 *
+            dt;
+
+    }
+
+
+    /* ======================
+       ПОЗИЦИЯ ИГРОКА
+    ====================== */
+
+    player.style.bottom =
+        (
+            groundHeight +
+            playerY
+        ) + "px";
+
+
+    player.style.transform =
+        `rotate(${rotation}deg)`;
+
+
+    /* ======================
+       ДВИЖЕНИЕ МИРА
+    ====================== */
+
+    worldX +=
+        speed * dt;
+
+
+    distance +=
+        speed * dt;
+
+
+    world.style.transform =
+        `translateX(${-worldX}px)`;
+
+
+    /* ======================
+       ПРОГРЕСС
+    ====================== */
+
+    const progress =
+        Math.min(
+            distance /
+            levelLength *
+            100,
+            100
+        );
+
+
+    scoreText.textContent =
+        Math.floor(progress) +
+        "%";
+
+
+    progressBar.style.width =
+        progress + "%";
+
+
+    /* ======================
+       КООРДИНАТЫ ИГРОКА
+    ====================== */
+
+    const playerWorldX =
+        150 + worldX;
+
+
+    const playerBottom =
+        groundHeight +
+        playerY;
+
+
+    /* ======================
+       СТОЛКНОВЕНИЯ
+    ====================== */
+
+    for (
+        const obstacle
+        of obstacles
+    ) {
+
+        const spikeLeft =
+            obstacle.x;
+
+
+        const spikeRight =
+            obstacle.x + 46;
+
+
+        /*
+            Немного уменьшаем
+            hitbox кубика.
+        */
+
+        const playerLeft =
+            playerWorldX + 7;
+
+
+        const playerRight =
+            playerWorldX +
+            playerSize -
+            7;
+
+
+        /*
+            Верх шипа.
+        */
+
+        const spikeTop =
+            groundHeight + 48;
+
+
+        /*
+            Проверяем X.
+        */
+
+        const hitX =
+            playerRight >
+                spikeLeft &&
+            playerLeft <
+                spikeRight;
+
+
+        /*
+            Проверяем Y.
+
+            Кубик находится
+            достаточно низко,
+            чтобы пересекаться
+            с шипом.
+        */
+
+        const hitY =
+            playerBottom <
+                spikeTop &&
+            playerBottom +
+                playerSize >
+                groundHeight + 5;
+
+
+        if (
+            hitX &&
+            hitY
+        ) {
+
+            die();
+
+            return;
+
+        }
+
+    }
+
+
+    /* ======================
+       МОНЕТЫ
+    ====================== */
+
+    for (
+        const coin
+        of coins
+    ) {
+
+        if (
+            coin.collected
+        ) {
+
+            continue;
+
+        }
+
+
+        const dx =
+            Math.abs(
+                playerWorldX +
+                21 -
+                coin.x
+            );
+
+
+        const dy =
+            Math.abs(
+                playerBottom +
+                21 -
+                180
+            );
+
+
+        if (
+            dx < 35 &&
+            dy < 55
+        ) {
+
+            coin.collected =
+                true;
+
+
+            coin.el.style.display =
+                "none";
+
+
+            createCoinParticles(
+                coin.x -
+                worldX
+            );
+
+
+            playCoin();
+
+        }
+
+    }
+
+
+    /* ======================
+       ХВОСТ
+    ====================== */
+
+    if (
+        Math.random() < .25
+    ) {
+
+        createTrail();
+
+    }
+
+
+    /* ======================
+       ПОБЕДА
+    ====================== */
+
+    if (
+        distance >=
+        levelLength
+    ) {
+
+        win();
+
+    }
+
+}
+
+
+/* =====================================================
+   СМЕРТЬ
+===================================================== */
+
+function die() {
+
+    running = false;
+
+
+    /*
+        Вспышка.
+    */
+
+    flash.style.opacity =
+        ".8";
+
+
+    setTimeout(
+        () => {
+
+            flash.style.opacity =
+                "0";
+
+        },
+        80
+    );
+
+
+    playDeath();
+
+
+    document.getElementById(
+        "resultIcon"
+    ).textContent =
+        "💥";
+
+
+    document.getElementById(
+        "resultTitle"
+    ).textContent =
+        "GAME OVER";
+
+
+    document.getElementById(
+        "finalScore"
+    ).textContent =
+        "Прогресс: " +
+        Math.floor(
+            distance /
+            levelLength *
+            100
+        ) +
+        "%";
+
+
+    setTimeout(
+        () => {
+
+            gameOver.classList.remove(
+                "hidden"
+            );
+
+        },
+        400
+    );
+
+}
+
+
+/* =====================================================
+   ПОБЕДА
+===================================================== */
+
+function win() {
+
+    running = false;
+
+
+    playWin();
+
+
+    scoreText.textContent =
+        "100%";
+
+
+    progressBar.style.width =
+        "100%";
+
+
+    setTimeout(
+        () => {
+
+            document.getElementById(
+                "resultIcon"
+            ).textContent =
+                "🏆";
+
+
+            document.getElementById(
+                "resultTitle"
+            ).textContent =
+                "LEVEL COMPLETE!";
+
+
+            document.getElementById(
+                "finalScore"
+            ).textContent =
+                "Ты прошёл уровень " +
+                (level + 1) +
+                "!";
+
+
+            gameOver.classList.remove(
+                "hidden"
+            );
+
+        },
+        400
+    );
+
+}
+
+
+/* =====================================================
+   ЧАСТИЦЫ ПРЫЖКА
+===================================================== */
+
+function createParticle() {
+
+    const p =
+        document.createElement(
+            "div"
+        );
+
+
+    p.className =
+        "particle";
+
+
+    p.style.left =
+        (
+            150 +
+            Math.random() *
+            20
+        ) + "px";
+
+
+    p.style.bottom =
+        (
+            groundHeight +
+            Math.random() *
+            15
+        ) + "px";
+
+
+    world.appendChild(p);
+
+
+    let life = 1;
+
+
+    let x =
+        parseFloat(
+            p.style.left
+        );
+
+
+    let y =
+        parseFloat(
+            p.style.bottom
+        );
+
+
+    const anim =
+        setInterval(
+            () => {
+
+                life -= .05;
+
+                x -= 2;
+
+                y -= 1;
+
+
+                p.style.left =
+                    x + "px";
+
+
+                p.style.bottom =
+                    y + "px";
+
+
+                p.style.opacity =
+                    life;
+
+
+                if (
+                    life <= 0
+                ) {
+
+                    clearInterval(
+                        anim
+                    );
+
+                    p.remove();
+
+                }
+
+            },
+            30
+        );
+
+}
+
+
+/* =====================================================
+   СЛЕД
+===================================================== */
+
+function createTrail() {
+
+    const p =
+        document.createElement(
+            "div"
+        );
+
+
+    p.className =
+        "particle";
+
+
+    p.style.left =
+        "155px";
+
+
+    p.style.bottom =
+        (
+            groundHeight +
+            5 +
+            playerY
+        ) + "px";
+
+
+    world.appendChild(p);
+
+
+    setTimeout(
+        () => {
+
+            p.remove();
+
+        },
+        180
+    );
+
+}
+
+
+/* =====================================================
+   ЧАСТИЦЫ МОНЕТЫ
+===================================================== */
+
+function createCoinParticles(x) {
+
+    for (
+        let i = 0;
+        i < 12;
+        i++
+    ) {
+
+        const p =
+            document.createElement(
+                "div"
+            );
+
+
+        p.className =
+            "particle";
+
+
+        p.style.left =
+            x + "px";
+
+
+        p.style.bottom =
+            "180px";
+
+
+        world.appendChild(p);
+
+
+        let angle =
+            Math.random() *
+            Math.PI *
+            2;
+
+
+        let speedP =
+            Math.random() *
+            4 + 2;
+
+
+        let life = 1;
+
+
+        const anim =
+            setInterval(
+                () => {
+
+                    life -= .05;
+
+
+                    const xx =
+                        parseFloat(
+                            p.style.left
+                        ) +
+                        Math.cos(angle) *
+                        speedP;
+
+
+                    const yy =
+                        parseFloat(
+                            p.style.bottom
+                        ) +
+                        Math.sin(angle) *
+                        speedP;
+
+
+                    p.style.left =
+                        xx + "px";
+
+
+                    p.style.bottom =
+                        yy + "px";
+
+
+                    p.style.opacity =
+                        life;
+
+
+                    if (
+                        life <= 0
+                    ) {
+
+                        clearInterval(
+                            anim
+                        );
+
+                        p.remove();
+
+                    }
+
+                },
+                30
+            );
+
+    }
+
+}
+
+
+/* =====================================================
+   AUDIO
+===================================================== */
+
+function initAudio() {
+
+    if (!audioCtx) {
+
+        audioCtx =
+            new (
+                window.AudioContext ||
+                window.webkitAudioContext
+            )();
+
+    }
+
+
+    if (
+        audioCtx.state ===
+        "suspended"
+    ) {
+
+        audioCtx.resume();
+
+    }
+
+}
+
+
+/* =====================================================
+   ЗВУК НОТЫ
+===================================================== */
+
+function tone(
+    frequency,
+    duration,
+    type = "square",
+    volume = .05
+) {
+
+    initAudio();
+
+
+    const oscillator =
+        audioCtx.createOscillator();
+
+
+    const gain =
+        audioCtx.createGain();
+
+
+    oscillator.type =
+        type;
+
+
+    oscillator.frequency.value =
+        frequency;
+
+
+    gain.gain.setValueAtTime(
+        volume,
+        audioCtx.currentTime
+    );
+
+
+    gain.gain.exponentialRampToValueAtTime(
+        .001,
+        audioCtx.currentTime +
+        duration
+    );
+
+
+    oscillator.connect(
+        gain
+    );
+
+
+    gain.connect(
+        audioCtx.destination
+    );
+
+
+    oscillator.start();
+
+
+    oscillator.stop(
+        audioCtx.currentTime +
+        duration
+    );
+
+}
+
+
+/* =====================================================
+   МУЗЫКА
+===================================================== */
+
+function startMusic() {
+
+    initAudio();
+
+
+    clearInterval(
+        musicTimer
+    );
+
+
+    const notes = [
+
+        261,
+        329,
+        392,
+        523,
+
+        392,
+        329,
+        293,
+        349
+
+    ];
+
+
+    let i = 0;
+
+
+    musicTimer =
+        setInterval(
+            () => {
+
+                if (!running)
+                    return;
+
+
+                tone(
+                    notes[
+                        i %
+                        notes.length
+                    ],
+
+                    .12,
+
+                    "square",
+
+                    .025
+                );
+
+
+                /*
+                    Бас.
+                */
+
+                if (
+                    i % 2 === 0
+                ) {
+
+                    tone(
+                        130,
+
+                        .08,
+
+                        "triangle",
+
+                        .018
+                    );
+
+                }
+
+
+                i++;
+
+            },
+
+            190
+        );
+
+}
+
+
+/* =====================================================
+   ЗВУК ПРЫЖКА
+===================================================== */
+
+function playJump() {
+
+    tone(
+        500,
+        .07,
+        "square",
+        .06
+    );
+
+
+    setTimeout(
+        () => {
+
+            tone(
+                750,
+                .07,
+                "square",
+                .04
+            );
+
+        },
+        25
+    );
+
+}
+
+
+/* =====================================================
+   ЗВУК МОНЕТЫ
+===================================================== */
+
+function playCoin() {
+
+    tone(
+        700,
+        .08,
+        "sine",
+        .08
+    );
+
+
+    setTimeout(
+        () => {
+
+            tone(
+                1000,
+                .1,
+                "sine",
+                .06
+            );
+
+        },
+        60
+    );
+
+}
+
+
+/* =====================================================
+   ЗВУК СМЕРТИ
+===================================================== */
+
+function playDeath() {
+
+    clearInterval(
+        musicTimer
+    );
+
+
+    tone(
+        150,
+        .25,
+        "sawtooth",
+        .09
+    );
+
+
+    setTimeout(
+        () => {
+
+            tone(
+                90,
+                .35,
+                "sawtooth",
+                .07
+            );
+
+        },
+        120
+    );
+
+}
+
+
+/* =====================================================
+   ЗВУК ПОБЕДЫ
+===================================================== */
+
+function playWin() {
+
+    clearInterval(
+        musicTimer
+    );
+
+
+    const winNotes = [
+
+        523,
+        659,
+        784,
+        1046
+
+    ];
+
+
+    winNotes.forEach(
+        (note, index) => {
+
+            setTimeout(
+                () => {
+
+                    tone(
+                        note,
+                        .25,
+                        "square",
+                        .07
+                    );
+
+                },
+
+                index * 150
+            );
+
+        }
+    );
+
+}
+
+</script>
+
+</body>
+</html>
+```
